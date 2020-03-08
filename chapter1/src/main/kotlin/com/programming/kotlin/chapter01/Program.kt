@@ -27,8 +27,6 @@ fun main(args: Array<String>) {
     var student = Student.create("Jill Williams")
     val panel = Panel(Rectangle(10, 100, 30, 300))
     println("Height: ${panel.getHeight()}, Width: ${panel.getWidth()}")
-
-
 }
 
 //===basic syntax===
