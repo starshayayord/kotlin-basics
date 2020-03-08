@@ -29,6 +29,183 @@ fun main(args: Array<String>) {
 
 }
 
+//===composite pattern===
+
+interface InfantryUnit
+class RiflemanUnit : InfantryUnit
+class Sniper : InfantryUnit
+
+class Squad(val infantryUnits: MutableList<InfantryUnit> = mutableListOf()) {
+    constructor(first: InfantryUnit) : this(mutableListOf()) {
+        this.infantryUnits.add(first)
+    }
+
+    constructor(first: InfantryUnit, second: InfantryUnit) : this(first) {
+        this.infantryUnits.add(second)
+    }
+
+    constructor(first: InfantryUnit, second: InfantryUnit, third: InfantryUnit) : this(first, second) {
+        this.infantryUnits.add(third)
+    }
+
+    //alternative way
+    constructor(vararg units: InfantryUnit) : this(mutableListOf()) {
+        for (u in units) {
+            this.infantryUnits.add(u)
+        }
+    }
+}
+
+
+
+//===bridging changes pattern===
+typealias PointsOfDamage = Long
+typealias Meters = Long
+
+const val GRENADE_DAMAGE: PointsOfDamage = 5L
+const val RIFLE_DAMAGE: PointsOfDamage = 3L
+const val REGULAR_SPEED: Meters = 1
+
+class Soldier(
+    private val weapon: Weapon,
+    private val legs: Legs
+) : InfantryUpg {
+    override fun move(x: Long, y: Long) {
+        legs.move()
+    }
+
+    override fun attack(x: Long, y: Long) {
+        weapon.causeDamage()
+    }
+}
+
+interface Weapon {
+    fun causeDamage(): PointsOfDamage
+}
+
+interface Legs {
+    fun move(): Meters
+}
+
+class Grenade : Weapon {
+    override fun causeDamage() = GRENADE_DAMAGE
+}
+
+class GrenadePack : Weapon {
+    override fun causeDamage() = GRENADE_DAMAGE * 3
+}
+
+class Rifle : Weapon {
+    override fun causeDamage() = RIFLE_DAMAGE
+}
+
+class MachineGun : Weapon {
+    override fun causeDamage() = RIFLE_DAMAGE * 2
+}
+
+class RegularLegs : Legs {
+    override fun move() = REGULAR_SPEED
+}
+
+class AthleticLegs : Legs {
+    override fun move() = REGULAR_SPEED * 2
+}
+
+var rifleman = Soldier(Rifle(), RegularLegs())
+//===bridge pattern===
+
+interface InfantryUpg {
+    fun move(x: Long, y: Long)
+
+    fun attack(x: Long, y: Long)
+}
+
+open class Rifleman1 : InfantryUpg {
+    override fun move(x: Long, y: Long) {
+    }
+
+    override fun attack(x: Long, y: Long) {
+    }
+}
+
+class Rifleman2 : Rifleman1() {
+    override fun attack(x: Long, y: Long) {
+    }
+}
+
+class Rifleman3 : Rifleman1() {
+    override fun move(x: Long, y: Long) {
+    }
+}
+
+open class Grenadier1 : InfantryUpg {
+    override fun move(x: Long, y: Long) {
+    }
+
+    override fun attack(x: Long, y: Long) {
+    }
+}
+
+open class Grenadier2 : Grenadier1() {
+    override fun attack(x: Long, y: Long) {
+    }
+}
+
+open class Grenadier3 : Grenadier1() {
+    override fun move(x: Long, y: Long) {
+    }
+}
+
+//===adapter (wrapper) pattern===
+interface UsbTypeC
+interface UsbMini
+interface EUPlug
+interface USPlug
+
+fun powerOutlet(): USPlug {
+    return object : USPlug {}
+}
+
+fun cellPhone(chargeCable: UsbTypeC) {
+}
+
+fun charger(plug: EUPlug): UsbMini {
+    return object : UsbMini {}
+}
+
+fun USPlug.toEUPlug(): EUPlug {
+    return object : EUPlug {
+        //to something to convert
+    }
+}
+
+fun UsbMini.toUsbTypeC(): UsbTypeC {
+    return object : UsbTypeC {
+        //to something to convert
+    }
+}
+
+var cellPhone = cellPhone(charger(powerOutlet().toEUPlug()).toUsbTypeC())
+
+//===decorator pattern
+class HappyMap<K, V>(private val map: MutableMap<K, V> = mutableMapOf()) : MutableMap<K, V> by map {
+    override fun put(key: K, value: V): V? {
+        return map.put(key, value).apply {
+            this?.let { println("Yay!$key") }
+        }
+    }
+}
+
+class SadMap<K, V>(private val map: MutableMap<K, V> = mutableMapOf()) : MutableMap<K, V> by map {
+    override fun remove(key: K): V? {
+        println("Okay...")
+        return map.remove(key)
+    }
+}
+
+var sadHappyMap = SadMap(HappyMap<String, String>())
+var superSadMap = SadMap(SadMap<String, String>())
+
 //===prototype pattern===
 data class PC(
     val motherboard: String = "Terassus XZ27",
