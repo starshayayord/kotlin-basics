@@ -1,5 +1,7 @@
 package com.programming.kotlin.chapter01
 
+import com.programming.kotlin.chapter01.BehavioralPatterns.Mood as Mood1
+
 private class BehavioralPatterns {
 
     //===strategy pattern===
@@ -46,13 +48,16 @@ private class BehavioralPatterns {
     }
 
     //===iterator pattern===
-    interface InfantryUnit
-    class Soldier(val name: String) : InfantryUnit {
+    interface InfantryUnit {
+        val name: String
+    }
+
+    class Soldier(override val name: String) : InfantryUnit {
 
     }
 
-    class Sergeant(val name: String = "Sergeant") : InfantryUnit
-    class Lieutenant(val name: String = "Lieutenant") : InfantryUnit
+    class Sergeant(override val name: String = "Sergeant") : InfantryUnit
+    class Lieutenant(override val name: String = "Lieutenant") : InfantryUnit
     class Squad(val infantryUnits: MutableList<InfantryUnit> = mutableListOf()) {
         val commander = Sergeant()
         operator fun iterator() = object : Iterator<InfantryUnit> {
@@ -82,7 +87,6 @@ private class BehavioralPatterns {
         }
     }
 
-
     class Platoon(val squads: MutableList<Squad> = mutableListOf()) {
         var commander = Lieutenant()
         operator fun iterator() = object : Iterator<InfantryUnit> {
@@ -108,6 +112,52 @@ private class BehavioralPatterns {
         var rangers = Squad(mutableListOf(Soldier("Josh"), Soldier("Eric"), Soldier("Tom")))
         var deltaForce = Squad(mutableListOf(Soldier("Sam"), Soldier("Will"), Soldier("Ham")))
         val blackHawk = Platoon(mutableListOf(rangers, deltaForce))
-
+        for (u in blackHawk) {
+            println(u.name)
+        }
     }
+
+    //===state pattern ===
+    interface WhatCanHappen {
+        fun seeHero()
+        fun getHit(pointsOfDmg: Int)
+        fun timePassed()
+    }
+
+    abstract class Mood
+    class Still : Mood()
+    class Aggressive : Mood()
+    class Retreating : Mood()
+    class Dead : Mood()
+
+    class Snail : WhatCanHappen {
+        private var healthPoints = 10
+        var mood: Mood = Still()
+        override fun seeHero() {
+            mood = when (mood) {
+                is Still -> Aggressive()
+                else -> mood
+            }
+        }
+
+        override fun getHit(pointsOfDmg: Int) {
+            healthPoints -= pointsOfDmg
+            mood = when {
+                healthPoints <= 0 -> Dead()
+                mood is Aggressive -> Retreating()
+                else -> mood
+            }
+        }
+
+        override fun timePassed() {
+            mood = when (mood) {
+                is Retreating -> Aggressive()
+                else -> mood
+            }
+        }
+    }
+
+    //===command pattern ===
+
+
 }
