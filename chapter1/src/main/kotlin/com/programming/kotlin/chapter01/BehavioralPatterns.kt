@@ -2,6 +2,8 @@ package com.programming.kotlin.chapter01
 
 import com.programming.kotlin.chapter01.BehavioralPatterns.Mood as Mood1
 
+typealias Command = () -> Unit
+
 private class BehavioralPatterns {
 
     //===strategy pattern===
@@ -53,7 +55,6 @@ private class BehavioralPatterns {
     }
 
     class Soldier(override val name: String) : InfantryUnit {
-
     }
 
     class Sergeant(override val name: String = "Sergeant") : InfantryUnit
@@ -157,7 +158,143 @@ private class BehavioralPatterns {
         }
     }
 
-    //===command pattern ===
+//===command pattern ===
 
+    class CatSoldier {
+        private var orders = mutableListOf<Command>()
+        val moveGenerator = fun(s: CatSoldier, x: Long, y: Long): Command {
+            return fun() {
+                s.move(x, y)
+            }
+        }
 
+        fun appendMove(x: Long, y: Long) = apply { orders.add(moveGenerator(this, x, y)) }
+
+        fun move(x: Long, y: Long) {
+            println("Moving to ($x, $y)")
+        }
+
+        fun execute() {
+            while (orders.isNotEmpty()) {
+                var command = orders.removeAt(0)
+                command.invoke()
+            }
+        }
+    }
+
+    fun mainCommand() {
+        val s = CatSoldier()
+        s.appendMove(20, 0)
+            .appendMove(20, 20)
+            .execute()
+    }
+
+    //===Mediator pattern===
+
+    interface Manager {
+        fun isAllGood(majorRelease: Boolean): Boolean
+    }
+
+    class MemManager {
+
+        private var lastThought = "Should get some coffee"
+        private var repeatThat = 3
+        private var thenHesitate = "Or maybe tea?"
+        private var secretThought = "No, coffee it is"
+        fun whatAreYouThinking() {
+            for (i in 1..repeatThat) {
+                println(lastThought)
+            }
+            println(thenHesitate)
+        }
+
+        inner class Thought {
+            fun captureThought(): CapturedThought {
+                return CapturedThought(lastThought, repeatThat, thenHesitate, secretThought)
+            }
+        }
+
+        data class CapturedThought(
+            val thought: String,
+            val repeat: Int,
+            val hesitate: String,
+            val secret: String
+        )
+
+        fun anotherThought() {
+            lastThought = "Tea would be better"
+            repeatThat = 2
+            thenHesitate = "But coffee is also nice"
+            secretThought = "Big latte would be great"
+        }
+
+        interface Canary {
+        }
+
+        interface QA {
+            fun doesMyCodeWork(): Boolean
+        }
+
+        interface Parrot {
+            fun isEating(): Boolean
+            fun isSleeping(): Boolean
+        }
+
+        object Michael : Canary, Manager {
+            val kenny = Kenny(this)
+            val brad = Brad(this)
+
+            override fun isAllGood(majorRelease: Boolean): Boolean {
+                if (!kenny.isEating() && !kenny.isSleeping()) {
+                    return kenny.doesMyCodeWork()
+                } else if (!brad.isEating() && !brad.isSleeping()) {
+                    return brad.doesMyCodeWork()
+                }
+                return false
+            }
+        }
+
+        class Kenny(private val manager: Manager) : QA, Parrot {
+            override fun isSleeping(): Boolean {
+                return false
+            }
+
+            override fun isEating(): Boolean {
+                return false
+            }
+
+            override fun doesMyCodeWork(): Boolean {
+                return true
+            }
+        }
+
+        class Brad(private val manager: Manager) : QA, Parrot {
+            override fun isSleeping(): Boolean {
+                return false
+            }
+
+            override fun isEating(): Boolean {
+                return false
+            }
+
+            override fun doesMyCodeWork(): Boolean {
+                return true
+            }
+        }
+
+        class MyPeacefulMind(private val manager: Manager) {
+            fun taskCompleted(isMajorRelease: Boolean) {
+                println(manager.isAllGood(isMajorRelease))
+            }
+        }
+
+        fun mainMediator(args: Array<String>) {
+            val michael = MemManager()
+
+            val captured = michael.Thought().captureThought()
+            michael.anotherThought()
+            michael.whatAreYouThinking()
+            println(captured)
+        }
+    }
 }
